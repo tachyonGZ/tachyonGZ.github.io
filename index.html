@@ -71,6 +71,115 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-深入解析-Go-语言-GMP-模型" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/" class="article-date">
+  <time class="dt-published" datetime="2025-03-15T13:00:59.000Z" itemprop="datePublished">2025-03-15</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/">深入解析 Go 语言 GMP 模型</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="协程的基本概念"><a href="#协程的基本概念" class="headerlink" title="协程的基本概念"></a>协程的基本概念</h1><p>在深入了解Goroutine之前，先来了解一下协程（Coroutine）的基本概念。</p>
+<h2 id="内核态和用户态"><a href="#内核态和用户态" class="headerlink" title="内核态和用户态"></a>内核态和用户态</h2><ul>
+<li><strong>内核态线程</strong>：由操作系统管理和调度，CPU只负责处理内核态线程。</li>
+<li><strong>用户态线程</strong>：由用户程序管理，需绑定到内核态线程上执行，协程即为用户态线程的一种。</li>
+</ul>
+<h2 id="内核态和用户态线程关系图"><a href="#内核态和用户态线程关系图" class="headerlink" title="内核态和用户态线程关系图"></a>内核态和用户态线程关系图</h2><p><img src="/2025/02/19/%E6%81%90%E6%83%A7%E4%B8%8E%E8%B4%AA%E5%A9%AA%E6%8C%87%E6%95%B0/%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/1.webp"></p>
+<ul>
+<li><strong>Kernel Space（内核空间）</strong>：上半部分的灰色区域，表示操作系统管理的内核空间。</li>
+<li><strong>User Space（用户空间）</strong>：下半部分的白色区域，表示用户程序运行的空间。</li>
+<li><strong>Kernel Thread 1 和Kernel Thread 2（内核线程）</strong>：由操作系统管理的内核线程，CPU直接处理这些线程。</li>
+<li><strong>User Thread 1、User Thread 2 和 User Thread 3（用户线程）</strong>：由用户程序管理的用户线程（协程），需绑定到内核线程上执行。</li>
+</ul>
+<h2 id="线程和协程的映射关系"><a href="#线程和协程的映射关系" class="headerlink" title="线程和协程的映射关系"></a>线程和协程的映射关系</h2><p><img src="/2025/02/19/%E6%81%90%E6%83%A7%E4%B8%8E%E8%B4%AA%E5%A9%AA%E6%8C%87%E6%95%B0/%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/2.webp"></p>
+<ol>
+<li><strong>单线程绑定所有协程</strong>：<ul>
+<li><strong>问题1</strong>：无法利用多核CPU的能力。</li>
+<li><strong>问题2</strong>：如果某个协程阻塞，整个线程和进程都将阻塞，导致其他协程无法执行，丧失并发能力。</li>
+</ul>
+</li>
+<li><strong>一对一映射</strong>：<ul>
+<li>将每个协程绑定到一个线程上，退回到多进程&#x2F;线程的模式，协程的创建、切换、销毁均需CPU完成，效率低下。</li>
+</ul>
+</li>
+<li><strong>多对多映射</strong>：<ul>
+<li>允许多个协程绑定到多个线程上，形成M:N的关系。这样可以充分利用多核CPU，并通过协程调度器高效管理协程的执行。</li>
+</ul>
+</li>
+</ol>
+<h1 id="Goroutine"><a href="#Goroutine" class="headerlink" title="Goroutine"></a>Goroutine</h1><p>Goroutine是Go语言中的协程，实现了轻量级并发。与传统的线程相比，Goroutine具有以下显著特点：</p>
+<h2 id="轻量级"><a href="#轻量级" class="headerlink" title="轻量级"></a>轻量级</h2><p>Goroutine非常轻量，初始化时仅占用几KB的栈内存，并且栈内存可以根据需要动态伸缩。<br>这使得我们可以在Go程序中创建成千上万个Goroutine，而不会消耗过多的系统资源。</p>
+<h2 id="高效调度"><a href="#高效调度" class="headerlink" title="高效调度"></a>高效调度</h2><p>Goroutine的调度由Go语言的运行时（runtime）负责，而不是操作系统。<br>Go运行时在用户态进行调度，避免了频繁的上下文切换带来的开销，使得调度更加高效。</p>
+<h1 id="Goroutine的使用示例"><a href="#Goroutine的使用示例" class="headerlink" title="Goroutine的使用示例"></a>Goroutine的使用示例</h1><h1 id="Goroutine调度器"><a href="#Goroutine调度器" class="headerlink" title="Goroutine调度器"></a>Goroutine调度器</h1><h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>在Go中，线程是运行Goroutine的实体，而调度器的功能是将可运行的Goroutine分配到工作线程上。Go语言采用了一种高效的Goroutine调度机制，使得程序能够在多核处理器上高效运行。</p>
+<h2 id="被废弃的调度器"><a href="#被废弃的调度器" class="headerlink" title="被废弃的调度器"></a>被废弃的调度器</h2><p>早期的调度器采用了简单的设计，存在多个缺陷：</p>
+<ul>
+<li><strong>概念</strong>：用大写的G表示协程，用大写的M表示线程。</li>
+<li><strong>问题</strong>：<ul>
+<li><strong>锁竞争</strong>：每个M（线程）想要执行、放回G（协程）都必须访问一个全局G队列，因此对G的访问需要加锁以保证并发安全。当有很多线程时，锁竞争激烈，影响系统性能。</li>
+<li><strong>局部性破坏</strong>：M转移G会造成延迟和额外的系统负载。例如，当一个G内创建另一个G’时，为了继续执行G，需要将G’交给另一个M’执行，这会破坏程序的局部性。</li>
+<li><strong>系统开销</strong>：CPU在线程之间频繁切换导致频繁的系统调用，增加了系统开销。</li>
+</ul>
+</li>
+</ul>
+<h2 id="GMP模型的设计思想"><a href="#GMP模型的设计思想" class="headerlink" title="GMP模型的设计思想"></a>GMP模型的设计思想</h2><p>为了克服上述问题，Go引入了GMP模型：<br><img src="/2025/02/19/%E6%81%90%E6%83%A7%E4%B8%8E%E8%B4%AA%E5%A9%AA%E6%8C%87%E6%95%B0/%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/3.webp"></p>
+<h3 id="G（Goroutine）"><a href="#G（Goroutine）" class="headerlink" title="G（Goroutine）"></a>G（Goroutine）</h3><p>Goroutine是Go语言中的协程，代表一个独立的执行单元。Goroutine比线程更加轻量级，启动一个Goroutine的开销非常小。Goroutine的调度由Go运行时在用户态进行。</p>
+<h3 id="M（Machine）"><a href="#M（Machine）" class="headerlink" title="M（Machine）"></a>M（Machine）</h3><p>M代表操作系统的线程。M负责实际执行Go代码。一个M可以执行多个Goroutine，但同一时间只能执行一个Goroutine。M与操作系统的线程直接对应，Go运行时通过M来利用多核CPU的并行计算能力。</p>
+<h3 id="P（Processor）"><a href="#P（Processor）" class="headerlink" title="P（Processor）"></a>P（Processor）</h3><p>P代表执行上下文（Processor）。P管理着可运行的Goroutine队列，并负责与M进行绑定。P的数量决定了可以并行执行的Goroutine的数量。Go运行时会根据系统的CPU核数设置P的数量。</p>
+<ul>
+<li><p>基本概念：</p>
+<ul>
+<li>Go语言使用GMP模型来管理并发执行。GMP模型由三个核心组件组成：G（Goroutine）、M（Machine）、P（Processor）</li>
+</ul>
+</li>
+<li><p>GMP模型的组成：</p>
+<ul>
+<li>全局G队列：存放等待运行的G。</li>
+<li>P的本地G队列：存放不超过256个G。当新建协程时优先将G存放到本地队列，本地队列满了后将一半的G移动到全局队列。</li>
+<li>M：内核态线程，线程想要运行协程需要先获取一个P，从P的本地G队列中获取G。当本地队列为空时，会尝试从全局队列或其他P的本地G列表中偷取G。</li>
+<li>P列表：程序启动时创建GOMAXPROCS个P，并保存在数组中。</li>
+</ul>
+</li>
+<li><p>调度器与OS调度器结合：</p>
+<ul>
+<li>Go的Goroutine调度器与操作系统调度器结合，OS调度器负责将线程分配给CPU执行。</li>
+</ul>
+</li>
+</ul>
+<h2 id="设计策略"><a href="#设计策略" class="headerlink" title="设计策略"></a>设计策略</h2><h2 id="调度策略"><a href="#调度策略" class="headerlink" title="调度策略"></a>调度策略</h2><h2 id="GMP模型的优势"><a href="#GMP模型的优势" class="headerlink" title="GMP模型的优势"></a>GMP模型的优势</h2><ol>
+<li><strong>高效的资源利用</strong>：通过在用户态进行调度，避免了频繁的上下文切换带来的开销，充分利用CPU资源。</li>
+<li><strong>轻量级并发</strong>：Goroutine比线程更加轻量级，可以启动大量的Goroutine而不会消耗大量内存。</li>
+<li><strong>自动调度</strong>：Go运行时自动管理Goroutine的调度，无需程序员手动干预，简化了并发编程的复杂度。</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://tachyongz.github.io/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/" data-id="cm8a88l2o00005gv3gr3z0dwe" data-title="深入解析 Go 语言 GMP 模型" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-Go中的context详解" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2025/02/20/Go%E4%B8%AD%E7%9A%84context%E8%AF%A6%E8%A7%A3/" class="article-date">
@@ -250,7 +359,7 @@
   <div class="widget-wrap">
     <h3 class="widget-title">Archives</h3>
     <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">February 2025</a></li></ul>
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/03/">March 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">February 2025</a></li></ul>
     </div>
   </div>
 
@@ -261,6 +370,10 @@
     <h3 class="widget-title">Recent Posts</h3>
     <div class="widget">
       <ul>
+        
+          <li>
+            <a href="/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/">深入解析 Go 语言 GMP 模型</a>
+          </li>
         
           <li>
             <a href="/2025/02/20/Go%E4%B8%AD%E7%9A%84context%E8%AF%A6%E8%A7%A3/">Go中的context详解</a>
