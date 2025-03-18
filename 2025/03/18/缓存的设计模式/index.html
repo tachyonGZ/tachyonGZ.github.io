@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>缓存的设计模式 | tachyonGZΣ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="利用缓存来加速系统已经成为很常见的一种操作。这种方式有效率、简单，而且成本也在可控的范围内。 说到缓存，通常会下意识的想到缓存是用来加速读的，实际上，读数据和写数据都可以使用缓存。 这些缓存模式并不是新技术，而是伴随在计算机体系结构演进中。 Cache-Aside如果从缓存中找到数据，称之为命中缓存,如果没有找到数据，称为之未命中缓存。 Cache-Aside 应该是使用最为广泛的一种模式。应用直">
+<meta property="og:type" content="article">
+<meta property="og:title" content="缓存的设计模式">
+<meta property="og:url" content="https://tachyongz.github.io/2025/03/18/%E7%BC%93%E5%AD%98%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:site_name" content="tachyonGZΣ">
+<meta property="og:description" content="利用缓存来加速系统已经成为很常见的一种操作。这种方式有效率、简单，而且成本也在可控的范围内。 说到缓存，通常会下意识的想到缓存是用来加速读的，实际上，读数据和写数据都可以使用缓存。 这些缓存模式并不是新技术，而是伴随在计算机体系结构演进中。 Cache-Aside如果从缓存中找到数据，称之为命中缓存,如果没有找到数据，称为之未命中缓存。 Cache-Aside 应该是使用最为广泛的一种模式。应用直">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2025-03-18T14:20:40.000Z">
+<meta property="article:modified_time" content="2025-03-18T14:37:49.663Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="tachyonGZΣ" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">tachyonGZΣ</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS Feed"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="Search"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://tachyongz.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-缓存的设计模式" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2025/03/18/%E7%BC%93%E5%AD%98%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" class="article-date">
+  <time class="dt-published" datetime="2025-03-18T14:20:40.000Z" itemprop="datePublished">2025-03-18</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      缓存的设计模式
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>利用缓存来加速系统已经成为很常见的一种操作。这种方式有效率、简单，而且成本也在可控的范围内。</p>
+<p>说到缓存，通常会下意识的想到缓存是用来加速读的，实际上，读数据和写数据都可以使用缓存。</p>
+<p>这些缓存模式并不是新技术，而是伴随在计算机体系结构演进中。</p>
+<h1 id="Cache-Aside"><a href="#Cache-Aside" class="headerlink" title="Cache-Aside"></a>Cache-Aside</h1><p>如果从缓存中找到数据，称之为命中缓存,如果没有找到数据，称为之未命中缓存。</p>
+<p>Cache-Aside 应该是使用最为广泛的一种模式。应用直接去缓存中找数据，命中缓存则直接返回，如果未命中缓存，则需要先去数据库中查询数据，并将查询到的数据存储到缓存中。</p>
+<p>这种方式会让缓存中的数据与数据库中的数据不一致，所以一般会给缓存中的数据设置过期时间（TTL），数据过期之后就去数据库中取最新的数据。</p>
+<ul>
+<li>适用场景：读多写少。</li>
+<li>缺点：多线程下易出现数据不一致的问题。</li>
+</ul>
+<h1 id="Read-Through-Write-Through"><a href="#Read-Through-Write-Through" class="headerlink" title="Read-Through &amp; Write-Through"></a>Read-Through &amp; Write-Through</h1><p>Read-Through的过程是查询缓存是否存在，存在则返回；不存在则由缓存组件去数据库加载数据。</p>
+<p>Read-Through 的方式与 Cache-Aside 的方式很接近，区别在于，Cache-Aside 是通过应用程序来更新缓存中的数据，<br>而 Read-Through 则是通过缓存自身来更新数据，也就是说应用和数据库之间不直接进行连接。</p>
+<p>Write-Through的过程是先查询要写入的数据在缓存是否存在，存在则先更新缓存然后再更新数据库最后返回；如果要写入的数据在缓存不存在，有两对应策略：一种是先将数据写入缓存，然后由缓存组件将数据同步更新到数据库；另一种策略是不写缓存直接将数据写入数据库。</p>
+<p>Write-Through 会先将数据写入到缓存中，然后由缓存将数据存入到数据库中。</p>
+<p>Write-Through 与 Read-Through 相结合可以很好的解决缓存和数据库中数据不一致的问题，Write-Through 每次都会先更新缓存中的数据，所以每次读到的数据也是最新的。</p>
+<ul>
+<li>适用场景：读多写少。</li>
+<li>缺点：<ol>
+<li>因为应用操作数据时只与缓存组件交互，相对于Cache-Aside而言数据不一致的概率要低一些。</li>
+<li>因为此模式下缓存没有过期时间，所以缓存的使用量会非常大。</li>
+</ol>
+</li>
+</ul>
+<h1 id="Write-Back"><a href="#Write-Back" class="headerlink" title="Write-Back"></a>Write-Back</h1><p>Write-Back是承接Write-Through的，在对数据进行数据持久化存储回写时一般采用异步回写，也可以间隔一定时间后批量回写</p>
+<p>Write-Through 每写一次缓存，缓存就会写一次数据库，而 Write-Back 则是写了多次缓存后才会写一次数据库，可以大大减轻服务器的压力。</p>
+<ul>
+<li>适用场景：读少写多</li>
+<li>缺点：<ol>
+<li>异步或间隔一定时间的批量回写会导致数据延迟</li>
+<li>在数据回写前缓存出现问题，即这部分数据没有持久化，可能会导致数据丢失。</li>
+</ol>
+</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://tachyongz.github.io/2025/03/18/%E7%BC%93%E5%AD%98%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" data-id="cm8elm8l7000018v32kicawhh" data-title="缓存的设计模式" class="article-share-link"><span class="fa fa-share">Share</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">深入解析 Go 语言 GMP 模型</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/03/">March 2025</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/02/">February 2025</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2025/03/18/%E7%BC%93%E5%AD%98%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">缓存的设计模式</a>
+          </li>
+        
+          <li>
+            <a href="/2025/03/15/%E6%B7%B1%E5%85%A5%E8%A7%A3%E6%9E%90-Go-%E8%AF%AD%E8%A8%80-GMP-%E6%A8%A1%E5%9E%8B/">深入解析 Go 语言 GMP 模型</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/20/Go%E4%B8%AD%E7%9A%84context%E8%AF%A6%E8%A7%A3/">Go中的context详解</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/19/%E6%81%90%E6%83%A7%E4%B8%8E%E8%B4%AA%E5%A9%AA%E6%8C%87%E6%95%B0/">恐惧与贪婪指数</a>
+          </li>
+        
+          <li>
+            <a href="/2025/02/19/%E4%B8%80%E6%96%87%E8%AF%BB%E6%87%82%E9%BB%84%E9%87%91%E4%BB%B7%E6%A0%BC%E4%B8%8E%E7%BE%8E%E5%85%83%E6%B1%87%E7%8E%87%E7%9A%84%E5%85%B3%E7%B3%BB/">一文读懂黄金价格与美元汇率的关系</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2025 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
